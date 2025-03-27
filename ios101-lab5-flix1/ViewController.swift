@@ -7,12 +7,59 @@ import UIKit
 import Nuke
 
 // TODO: Add table view data source conformance
-class ViewController: UIViewController {
-
+class ViewController: UIViewController, UITableViewDataSource {
+    // To return number of rows in the table
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        
+        print("🍏 numberOfRowsInSection called with movies count: \(movies.count)")
+        // Return the number of rows for the table.
+        return movies.count
+    }
+    
+    // Return the cell of specific row
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        // Create, configure, and return a table view cell for the given row (i.e., `indexPath.row`)
+        
+        print("🍏 cellForRowAt called for row: \(indexPath.row)")
+        
+        // Get a reusable cell
+        // Returns a reusable table-view cell object for the specified reuse identifier and adds it to the table. This helps optimize table view performance as the app only needs to create enough cells to fill the screen and reuse cells that scroll off the screen instead of creating new ones.
+        // The identifier references the identifier you set for the cell previously in the storyboard.
+        // The `dequeueReusableCell` method returns a regular `UITableViewCell`, so we must cast it as our custom cell (i.e., `as! MovieCell`) to access the custom properties you added to the cell.
+        let cell = tableView.dequeueReusableCell(withIdentifier: "MovieCell", for: indexPath) as! MovieCell
+        
+        // Get the movie associated table view row
+        let movie = movies[indexPath.row]
+        
+        // Configure the cell (i.e., update UI elements like labels, image views, etc.)
+        
+        // Unwrap the optional poster path
+        if let posterPath = movie.poster_path,
+           
+            // Create a url by appending the poster path to the base url. https://developers.themoviedb.org/3/getting-started/images
+           let imageUrl = URL(string: "https://image.tmdb.org/t/p/w500" + posterPath) {
+            
+            // Use the Nuke library's load image function to (async) fetch and load the image from the image URL.
+            Nuke.loadImage(with: imageUrl, into: cell.posterImageView)
+        }
+        
+        // Set the text on the labels
+        cell.titleLabel.text = movie.title
+        cell.overviewLabel.text = movie.overview
+        
+        // Return the cell for use in the respective table view row
+        // Return the cell for use in the respective table view row
+        return cell
+    }
+    
+    // A property to store the movies we fetch.
+    // Providing a default value of an empty array (i.e., `[]`) avoids having to deal with optionals.
+    private var movies : [Movie] = []
 
     // TODO: Add table view outlet
 
-
+    @IBOutlet weak var tableView: UITableView!
+    
     // TODO: Add property to store fetched movies array
 
 
@@ -20,7 +67,8 @@ class ViewController: UIViewController {
         super.viewDidLoad()
 
         // TODO: Assign table view data source
-
+        // Set TableView's dataSource as self
+        tableView.dataSource = self
 
         fetchMovies()
     }
@@ -67,7 +115,7 @@ class ViewController: UIViewController {
 
                 // Run any code that will update UI on the main thread.
                 DispatchQueue.main.async { [weak self] in
-
+                    
                     // We have movies! Do something with them!
                     print("✅ SUCCESS!!! Fetched \(movies.count) movies")
 
@@ -79,8 +127,10 @@ class ViewController: UIViewController {
                     }
 
                     // TODO: Store movies in the `movies` property on the view controller
-
-
+                    // Update the movies property so we can access movie data anywhere in the view controller.
+                    self?.movies = movies
+                    self?.tableView.reloadData()
+                    print("🍏 Fetched and stored \(movies.count) movies")
 
                 }
             } catch {
